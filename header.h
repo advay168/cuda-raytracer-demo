@@ -11,5 +11,6 @@ struct sphere {
   uint32_t colour;
 };
 
-void init(int w, int h);
-void doRender(uint32_t *framebuffer, sphere *s, int count);
+void init(int width, int height);
+void doRender(uint32_t *framebuffer, int width, int height, sphere *s,
+              int count);

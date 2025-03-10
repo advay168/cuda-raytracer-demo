@@ -1,10 +1,11 @@
 #!/bin/python3
 import os
-import subprocess as proc
+import subprocess
+import shutil
 
 
 def shell(command):
-    return proc.check_output(command, shell=True).decode("utf-8").strip()
+    return subprocess.check_output(command, shell=True).decode("utf-8").strip()
 
 
 # CAPITAL variables are configurations.
@@ -157,41 +158,52 @@ cxxflags = " ".join(CXXFLAGS)
 
 # Create build folder if that's not available.
 os.makedirs(BUILD_DIR, exist_ok=True)
+shutil.rmtree(BUILD_DIR)
+os.makedirs(BUILD_DIR, exist_ok=True)
 
 # Compile device-side code.
 deviceflags = " ".join(DEVICEFLAGS)
-proc.run(
+subprocess.run(
     f"clang -cc1 {deviceflags} {cxxflags} -o {BUILD_DIR}/device.s raytracer.cu",
     shell=True,
+    check=True,
 )
 
-# Assemble PTX into SASS.
-proc.run(
-    f"ptxas -m64 -O0 --gpu-name {SM} --output-file {BUILD_DIR}/device.o {BUILD_DIR}/device.s",
+# Assemble PTX into cubin.
+subprocess.run(
+    f"ptxas -m64 -O0 --gpu-name {SM} --output-file {BUILD_DIR}/device.cubin {BUILD_DIR}/device.s",
     shell=True,
+    check=True,
 )
 
-# Embed SASS into a fat binary.
-proc.run(
-    f"fatbinary -64 --create {BUILD_DIR}/device.fatbin --image=profile={SM},file={BUILD_DIR}/device.o",
+# Embed cubin into a fat binary.
+subprocess.run(
+    f"fatbinary -64 --create {BUILD_DIR}/device.fatbin --image=profile={SM},file={BUILD_DIR}/device.cubin",
     shell=True,
+    check=True,
 )
 
 # Compile host-side code.
 hostflags = " ".join(HOSTFLAGS)
-proc.run(
+subprocess.run(
     f"clang++ -cc1 {hostflags} {cxxflags} -o {BUILD_DIR}/host.o raytracer.cu",
     shell=True,
+    check=True,
 )
 
 # Compile `main.cpp` normally.
-proc.run(f"clang++ -c -Iraylib/include -o {BUILD_DIR}/main.o main.cpp", shell=True)
+subprocess.run(
+    f"clang++ -c -Iraylib/include -o {BUILD_DIR}/main.o main.cpp",
+    shell=True,
+    check=True,
+)
 
 # Link with CUDA.
 libpaths = " ".join([f"-L{path}" for path in LIBPATHS])
 libs = " ".join([f"-l{lib}" for lib in LIBRARIES])
 ldflags = " ".join(LDFLAGS)
-proc.run(
+subprocess.run(
     f"ld {ldflags} -o {BUILD_DIR}/raytracer {libpaths} {BUILD_DIR}/host.o {BUILD_DIR}/main.o {libs}",
     shell=True,
+    check=True,
 )

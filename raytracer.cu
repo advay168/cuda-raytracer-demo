@@ -55,26 +55,28 @@ __global__ void render(uint32_t *framebuffer, int width, int height,
 }
 
 uint32_t *d_framebuffer;
-int width, height;
 sphere *d_sphere = nullptr;
 int d_count = 0;
 
-void init(int w, int h) {
-  width = w;
-  height = h;
+void init(int width, int height) {
+  cudaFree(d_framebuffer);
   cudaMalloc(&d_framebuffer, width * height * sizeof(uint32_t));
 }
 
-void doRender(uint32_t *framebuffer, sphere *spheres, int count) {
+void doRender(uint32_t *framebuffer, int width, int height, sphere *spheres, int count) {
   if (count > d_count) {
     cudaFree(d_sphere);
     d_count = count;
     cudaMalloc(&d_sphere, sizeof(sphere) * d_count);
   }
   cudaMemcpy(d_sphere, spheres, count * sizeof(sphere), cudaMemcpyHostToDevice);
-  dim3 threads(16, 16);
-  dim3 blocks(width / threads.x, height / threads.y);
+
+  dim3 blocks(32, 32);
+  dim3 threads(width / blocks.x, height / blocks.y);
+  // printf("threads(%d, %d, %d)\n", threads.x, threads.y, threads.z);
+  // printf("blocks(%d, %d, %d)\n", blocks.x, blocks.y, blocks.z);
   render<<<threads, blocks>>>(d_framebuffer, width, height, d_sphere, count);
+
   cudaMemcpy(framebuffer, d_framebuffer, width * height * sizeof(uint32_t),
              cudaMemcpyDeviceToHost);
 
