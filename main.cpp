@@ -10,7 +10,7 @@
 
 int main() {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-  InitWindow(1800, 1800, "CIR CUDA Demo");
+  InitWindow(1200, 1200, "CIR CUDA Demo");
   Texture2D texture;
   Colour *framebuffer = 0;
   int prev_width = 0, prev_height = 0;

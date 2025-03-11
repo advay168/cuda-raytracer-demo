@@ -163,47 +163,80 @@ os.makedirs(BUILD_DIR, exist_ok=True)
 
 # Compile device-side code.
 deviceflags = " ".join(DEVICEFLAGS)
+print(
+
+    f"clang -cc1 {deviceflags} {cxxflags} -o {BUILD_DIR}/device.s raytracer.cu",
+)
 subprocess.run(
     f"clang -cc1 {deviceflags} {cxxflags} -o {BUILD_DIR}/device.s raytracer.cu",
     shell=True,
     check=True,
+    stderr = subprocess.DEVNULL,
 )
 
 # Assemble PTX into cubin.
+print(
+
+    f"ptxas -m64 -O0 --gpu-name {SM} --output-file {BUILD_DIR}/device.cubin {BUILD_DIR}/device.s",
+)
 subprocess.run(
     f"ptxas -m64 -O0 --gpu-name {SM} --output-file {BUILD_DIR}/device.cubin {BUILD_DIR}/device.s",
     shell=True,
     check=True,
+    stderr = subprocess.DEVNULL,
 )
 
 # Embed cubin into a fat binary.
+print(
+
+    f"fatbinary -64 --create {BUILD_DIR}/device.fatbin --image=profile={SM},file={BUILD_DIR}/device.cubin",
+)
 subprocess.run(
     f"fatbinary -64 --create {BUILD_DIR}/device.fatbin --image=profile={SM},file={BUILD_DIR}/device.cubin",
     shell=True,
     check=True,
+    stderr = subprocess.DEVNULL,
 )
 
 # Compile host-side code.
 hostflags = " ".join(HOSTFLAGS)
+print(
+
+    f"clang++ -cc1 {hostflags} {cxxflags} -o {BUILD_DIR}/host.o raytracer.cu",
+)
 subprocess.run(
     f"clang++ -cc1 {hostflags} {cxxflags} -o {BUILD_DIR}/host.o raytracer.cu",
     shell=True,
     check=True,
+    stderr = subprocess.DEVNULL,
+    stdout = subprocess.DEVNULL,
 )
 
 # Compile `main.cpp` normally.
+print(
+
+    f"clang++ -c -Iraylib/include -o {BUILD_DIR}/main.o main.cpp",
+)
 subprocess.run(
     f"clang++ -c -Iraylib/include -o {BUILD_DIR}/main.o main.cpp",
     shell=True,
     check=True,
+    stderr = subprocess.DEVNULL,
+    stdout = subprocess.DEVNULL,
 )
 
 # Link with CUDA.
 libpaths = " ".join([f"-L{path}" for path in LIBPATHS])
 libs = " ".join([f"-l{lib}" for lib in LIBRARIES])
 ldflags = " ".join(LDFLAGS)
+print(
+
+    f"ld {ldflags} -o {BUILD_DIR}/raytracer {libpaths} {BUILD_DIR}/host.o {BUILD_DIR}/main.o {libs}",
+)
 subprocess.run(
     f"ld {ldflags} -o {BUILD_DIR}/raytracer {libpaths} {BUILD_DIR}/host.o {BUILD_DIR}/main.o {libs}",
     shell=True,
     check=True,
+    stderr = subprocess.DEVNULL,
+    stdout = subprocess.DEVNULL,
 )
