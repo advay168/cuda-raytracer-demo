@@ -10,9 +10,9 @@
 
 int main() {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-  InitWindow(0, 0, "Raytracer demo");
+  InitWindow(1800, 1800, "CIR CUDA Demo");
   Texture2D texture;
-  uint32_t *framebuffer = 0;
+  Colour *framebuffer = 0;
   int prev_width = 0, prev_height = 0;
 
   while (!WindowShouldClose()) {
@@ -22,7 +22,7 @@ int main() {
     int width = GetRenderWidth(), height = GetRenderHeight();
     if (prev_width != width || prev_height != height) {
       free(framebuffer);
-      framebuffer = (uint32_t *)malloc(sizeof(uint32_t) * width * height);
+      framebuffer = (Colour *)malloc(sizeof(uint32_t) * width * height);
       init(width, height);
       Image img = {
           .data = framebuffer,
@@ -37,10 +37,14 @@ int main() {
       prev_width = width, prev_height = height;
     }
 
-    // std::vector<sphere> spheres = {{
-    std::array<sphere, 2> spheres = {{
-        sphere{{-1, 0, -3}, 2 * powf(sin(GetTime()), 2), 0xFFEE2222},
-        sphere{{+1, 0, -3}, 1 * powf(sin(GetTime() * 2 + PI * 0.5f), 2), 0xFF11DDFF},
+    std::vector<sphere> spheres = {{
+    // std::array<sphere, 1> spheres = {{
+        // sphere{{0, 0, 3}, 1, Colour{255, 0, 0, 255}},
+        sphere{{0, 0, 3}, 0.5f + 1.5f * powf(sin(GetTime() * 0.7f), 2), Colour{255, 0, 0, 255}},
+        // sphere{{1, 1, 3}, 0.5, Colour{0, 0, 255, 255}},
+        // sphere{{0, 2, 3}, 2, Colour{255, 10, 0, 255}},
+        // sphere{{-1, 0, -3}, 2 * powf(sin(GetTime()), 2), Colour{0, 0, 255, 255}},
+        // sphere{{+1, 0, -3}, 1.5f * powf(sin(GetTime() * 1.2 + PI * 0.5f), 2), Colour{255, 0, 0, 255}},
     }};
 
     doRender(framebuffer, width, height, spheres.data(), spheres.size());
